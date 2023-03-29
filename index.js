@@ -1,11 +1,12 @@
-const { Engine, Render, Runner, World, Bodies, Body } = Matter;
+const { Engine, Render, Runner, World, Bodies, Body, Events } = Matter;
 
-const cells = 20;
+const cells = 3;
 const width = 600;
 const height = 600;
 const unitLength = width / cells;
 
 const engine = Engine.create();
+engine.world.gravity.y = 0;
 const { world } = engine;
 const render = Render.create({
   element: document.body,
@@ -139,6 +140,7 @@ horizontals.forEach((row, rowIndex) => {
       {
         isStatic: true,
         render: { fillStyle: "silver" },
+        label: "wall",
       }
     );
     World.add(world, wall);
@@ -158,6 +160,7 @@ verticals.forEach((row, rowIndex) => {
       {
         isStatic: true,
         render: { fillStyle: "silver" },
+        label: "wall",
       }
     );
     World.add(world, wall);
@@ -173,6 +176,7 @@ const goal = Bodies.rectangle(
   {
     isStatic: true,
     render: { fillStyle: "gold" },
+    label: "goal",
   }
 );
 World.add(world, goal);
@@ -181,21 +185,41 @@ World.add(world, goal);
 const ball = Bodies.circle(unitLength / 2, unitLength / 2, unitLength / 4, {
   isStatic: false,
   render: { fillStyle: "blue" },
+  label: "ball",
 });
 World.add(world, ball);
 
 document.addEventListener("keydown", (event) => {
   const { x, y } = ball.velocity;
-  if (event.key === "w" || event.key === "ArrowUp" || event.key ==="W") {
-  Body.setVelocity(ball, { x, y: y - 5 })
+  if (event.key === "w" || event.key === "ArrowUp" || event.key === "W") {
+    Body.setVelocity(ball, { x, y: y - 5 });
   }
-  if (event.key === "d" || event.key === "ArrowRight" || event.key ==="D") {
-  Body.setVelocity(ball, { x: x + 5, y })
+  if (event.key === "d" || event.key === "ArrowRight" || event.key === "D") {
+    Body.setVelocity(ball, { x: x + 5, y });
   }
-  if (event.key === "s" || event.key === "ArrowDown" || event.key ==="S") {
-  Body.setVelocity(ball, { x, y: y + 5 })
+  if (event.key === "s" || event.key === "ArrowDown" || event.key === "S") {
+    Body.setVelocity(ball, { x, y: y + 5 });
   }
-  if (event.key === "a" || event.key === "ArrowLeft" || event.key ==="A") {
-  Body.setVelocity(ball, { x: x - 5, y })
+  if (event.key === "a" || event.key === "ArrowLeft" || event.key === "A") {
+    Body.setVelocity(ball, { x: x - 5, y });
   }
+});
+
+// Win Condition
+Events.on(engine, "collisionStart", (event) => {
+  event.pairs.forEach((collision) => {
+    const labels = ["ball", "goal"];
+
+    if (
+      labels.includes(collision.bodyA.label) &&
+      labels.includes(collision.bodyB.label)
+    ) {
+      world.gravity.y = 1;
+      world.bodies.forEach((body) => {
+        if (body.label === "wall") {
+          Body.setStatic(body, false);
+        }
+      });
+    }
+  });
 });
